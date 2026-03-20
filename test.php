@@ -132,7 +132,7 @@ $active_page = $_GET['page'] ?? 'xss';
     <link
         href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="style4.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
@@ -180,8 +180,9 @@ $active_page = $_GET['page'] ?? 'xss';
                 Scripting</a>
             <a class="nav-item <?= $active_page === 'csrf' ? 'active' : '' ?>" href="?page=csrf">🔒 &nbsp;Cross-Site
                 Request Forgery</a>
-            <a class="nav-item <?= $active_page === 'bac'  ? 'active' : '' ?>" href="?page=bac">🔑 &nbsp;Broken Access
-                Control</a>
+            <!-- <a class="nav-item <?= $active_page === 'bac'  ? 'active' : '' ?>" href="?page=bac&user_id=<?= $_SESSION['user_id']?>">🔑 &nbsp;Broken Access Control</a> -->
+            <a class="nav-item <?= $active_page === 'bac'  ? 'active' : '' ?>" href="?page=bac<?= isset($_SESSION['user_id']) ? "&user_id=" . $_SESSION['user_id'] : ''?>">🔑 &nbsp;Broken Access Control</a>
+            
         </aside>
 
 
@@ -309,45 +310,66 @@ $active_page = $_GET['page'] ?? 'xss';
 
         <!-- PAGE: BAC -->
         <main <?= $active_page === 'bac' ? 'class="active"' : '' ?>>
-            <div class="breadcrumb">Security › <span>Broken Access Control</span></div>
-            <h1 class="page-title">
-                Broken Access Control
-                <span class="severity-badge badge-critical">🚨 CRITICAL</span>
-            </h1>
-            <p class="page-subtitle">Xem số dư ví của bất kỳ user nào qua URL</p>
+    <div class="breadcrumb">Security › <span>Broken Access Control (IDOR)</span></div>
+    <h1 class="page-title">
+        Broken Access Control
+        <span class="severity-badge badge-critical">🚨 CRITICAL</span>
+    </h1>
+    <p class="page-subtitle">Sửa đổi thông tin của bất kỳ user nào qua ID trên URL</p>
 
-            <div class="card">
-                <div class="card-header">🔍 Xem số dư ví</div>
-                <div class="card-body">
+    <div class="card">
+        <div class="card-header">🛠️ Quản lý tài khoản cá nhân</div>                
+        
+        <div class="card-body">
+            <?php if (isset($_SESSION['user_id'])): ?>
 
-                    <?php if (isset($_SESSION['user_id'])): ?>
+                <?php if ($idor_user): ?>
+                    <!-- Form cập nhật thông tin -->
+                    <form method="POST" action="handle/update_profile.php?user_id=<?= $_GET['user_id'] ?>" style="margin-bottom: 20px;">
+                        <div style="margin-bottom: 12px;">
+                            <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">Username hiện tại:</label>
+                            <input type="text" name="new_username" value="<?= htmlspecialchars($idor_user['username']) ?>" 
+                                   style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                        </div>
 
-                    <?php if ($idor_user): ?>
-                    <p style="font-size:13.5px;margin-bottom:8px;"><strong>Username:</strong>
-                        <?= $idor_user['username'] ?></p>
-                    <p style="font-size:13.5px;margin-bottom:16px;"><strong>Số dư ví:</strong>
-                        <?= number_format($idor_user['balance']) ?> $</p>
-                    <?php else: ?>
-                    <p style="color:red;font-size:13.5px;margin-bottom:16px;">Không tìm thấy user.</p>
-                    <?php endif; ?>
+                        <div style="margin-bottom: 12px;">
+                            <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">Mật khẩu:</label>
+                            <input type="text" name="new_password" placeholder="Để trống nếu không đổi"
+                                   style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                        </div>
+                        
+                        <div style="margin-bottom: 16px;">
+                            <p style="font-size:13.5px;"><strong>Số dư ví:</strong> 
+                                <span style="color:var(--emerald); font-weight:bold;"><?= number_format($idor_user['balance']) ?> $</span>
+                            </p>
+                        </div>
 
-                    <p
-                        style="font-size:13px;color:var(--orange);font-weight:600;background:var(--orange-pale);border:1px solid rgba(249,115,22,.2);border-radius:8px;padding:12px 14px;">
-                        💡 Hãy thay đổi <code>user_id</code> trên URL để xem lỗ hổng IDOR!<br>
-                        <span style="font-weight:400;font-size:12px;">Ví dụ: <code>?page=bac&user_id=1</code> để xem tài
-                            khoản Admin</span>
-                    </p>
+                        <button type="submit" 
+                                style="background:var(--sky); color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:600;">
+                            Cập nhật thông tin
+                        </button>
+                    </form>
+                <?php else: ?>
+                    <p style="color:red; font-size:13.5px; margin-bottom:16px;">❌ Không tìm thấy user.</p>
+                <?php endif; ?>
 
-                    <?php else: ?>
-                    <p style="text-align:center;padding:24px 0;font-size:14px;color:var(--slate-400);">
-                        🔒 <a href="#" onclick="document.getElementById('modal').classList.add('show')"
-                            style="color:var(--sky);font-weight:600;text-decoration:none;">Đăng nhập</a> để xem số dư
-                    </p>
-                    <?php endif; ?>
+                <!-- Box hướng dẫn tấn công -->
+                <!-- <p style="font-size:13px; color:var(--orange); font-weight:600; background:var(--orange-pale); border:1px solid rgba(249,115,22,.2); border-radius:8px; padding:12px 14px;">
+                    💡 <b>Kịch bản tấn công:</b><br>
+                    1. Đăng nhập vào tài khoản của bạn.<br>
+                    2. Thay đổi <code>user_id=1</code> trên URL.<br>
+                    3. Đổi tên của Admin và nhấn "Cập nhật" để thấy lỗi IDOR thực thi!
+                </p> -->
 
-                </div>
-            </div>
-        </main>
+            <?php else: ?>
+                <p style="text-align:center; padding:24px 0; font-size:14px; color:var(--slate-400);">
+                    🔒 <a href="#" onclick="document.getElementById('modal').classList.add('show')"
+                        style="color:var(--sky); font-weight:600; text-decoration:none;">Đăng nhập</a> để quản lý hồ sơ
+                </p>
+            <?php endif; ?>
+        </div>
+    </div>
+</main>
 
     </div>
 
