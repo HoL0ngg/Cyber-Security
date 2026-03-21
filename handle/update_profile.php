@@ -2,9 +2,13 @@
         $conn = mysqli_connect("localhost", "root", "", "anm");
       if($_SERVER["REQUEST_METHOD"] === "POST" && isset($_GET['user_id'])) {
         $target_id = $_GET['user_id'];
+        $session_id = $_SESSION['user_id'];
         $new_name = $_POST['new_username'];
         $new_password = !empty($_POST['new_password']) ? $_POST['new_password'] : null;
 
+        // if($target_id != $session_id){
+        //     die("🚨 Hành động bị chặn: Bạn không thể sửa đổi dữ liệu của người khác!");
+        // }
         $sql = 'UPDATE users set username = ?';
         $params  = [$new_name];   
         $types = "s";     
@@ -24,7 +28,8 @@
         $stmt->bind_param($types, ...$params);
 
         if($stmt->execute()){
-            header("Location: ?page=bac&user_id=$target_id");
+            header("Location: /test.php?page=bac&user_id=" . $target_id . "&success=1");
+            echo "alert('Thành công')";
             exit();
         }else{
             echo "Co loi khi update " . $conn->error; 
@@ -32,4 +37,6 @@
 
       } 
     ?>
+
+    
 
