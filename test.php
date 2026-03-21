@@ -31,7 +31,7 @@ if (isset($_POST['do_login'])) {
     header('Content-Type: application/json');
 
     $username = $_POST['username'];
-    $password = $_POST['password'];    
+    $password = $_POST['password'];
     $res  = mysqli_query($conn, "SELECT * FROM users WHERE username='$username'");
     $user = mysqli_fetch_assoc($res);
 
@@ -66,10 +66,10 @@ if (isset($_GET['logout'])) {
 
 // if (isset($_GET['logout'])) {
 //     session_destroy();
-    
+
 //     // Xóa cookie PHPSESSID trong trình duyệt
 //     setcookie('PHPSESSID', '', time() - 3600, '/');
-    
+
 //     header("Location: ?page=xss");
 //     exit;
 // }
@@ -126,12 +126,28 @@ if (isset($_POST['transfer']) && isset($_SESSION['user_id'])) {
 }
 
 // ── BAC / IDOR ──
-$view_id   = $_GET['user_id'] ?? ($_SESSION['user_id'] ?? null);
 $idor_user = null;
-if ($view_id) {
-    $res_idor  = mysqli_query($conn, "SELECT * FROM users WHERE id = $view_id");
-    $idor_user = mysqli_fetch_assoc($res_idor);
+// $view_id   = $_GET['user_id'] ?? ($_SESSION['user_id'] ?? null);
+// if ($view_id) {
+//     $res_idor  = mysqli_query($conn, "SELECT * FROM users WHERE id = $view_id");
+//     $idor_user = mysqli_fetch_assoc($res_idor);
+// }
+
+// PREVENT IDOR 
+$user_id_from_url = isset($_GET['user_id']) ? $_GET['user_id'] : null;
+$current_session_id = $_SESSION['user_id'];
+if ($user_id_from_url != $current_session_id) {
+    // echo "<div class='alert-danger'>Bạn không có quyền xem hồ sơ này!</div>";
+    echo "<script>alert('Bạn không có quyền xem thông tin của user khác')</script>";
 }
+$qry  = "SELECT * FROM users WHERE id = ?";
+
+$stmt = $conn->prepare($qry);
+$stmt->bind_param("i", $current_session_id);
+$stmt->execute();
+
+$result = $stmt->get_result();
+$idor_user = $result->fetch_assoc();
 
 $active_page = $_GET['page'] ?? 'xss';
 ?>
@@ -163,23 +179,23 @@ $active_page = $_GET['page'] ?? 'xss';
         </div>
 
         <?php if (isset($_SESSION['user_id'])): ?>
-        <div style="display:flex;align-items:center;gap:12px;">
-            <span style="font-size:13.5px;color:var(--slate-500);">👤
-                <strong><?= $_SESSION['username'] ?></strong></span>
-            <a href="?logout=1"
-                style="background:var(--slate-100);color:var(--slate-600);border:1px solid var(--slate-200);padding:8px 16px;border-radius:7px;font-size:13px;font-weight:600;text-decoration:none;">Đăng
-                xuất</a>
-        </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span style="font-size:13.5px;color:var(--slate-500);">👤
+                    <strong><?= $_SESSION['username'] ?></strong></span>
+                <a href="?logout=1"
+                    style="background:var(--slate-100);color:var(--slate-600);border:1px solid var(--slate-200);padding:8px 16px;border-radius:7px;font-size:13px;font-weight:600;text-decoration:none;">Đăng
+                    xuất</a>
+            </div>
         <?php else: ?>
-        <button class="btn-login" onclick="document.getElementById('modal').classList.add('show')">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                stroke-linecap="round" stroke-linejoin="round">
-                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-                <polyline points="10,17 15,12 10,7" />
-                <line x1="15" y1="12" x2="3" y2="12" />
-            </svg>
-            Login
-        </button>
+            <button class="btn-login" onclick="document.getElementById('modal').classList.add('show')">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                    <polyline points="10,17 15,12 10,7" />
+                    <line x1="15" y1="12" x2="3" y2="12" />
+                </svg>
+                Login
+            </button>
         <?php endif; ?>
     </header>
 
@@ -193,9 +209,9 @@ $active_page = $_GET['page'] ?? 'xss';
                 Scripting</a>
             <a class="nav-item <?= $active_page === 'csrf' ? 'active' : '' ?>" href="?page=csrf">🔒 &nbsp;Cross-Site
                 Request Forgery</a>
-            
-            <a class="nav-item <?= $active_page === 'bac'  ? 'active' : '' ?>" href="?page=bac<?= isset($_SESSION['user_id']) ? "&user_id=" . $_SESSION['user_id'] : ''?>">🔑 &nbsp;Broken Access Control</a>
-            
+
+            <a class="nav-item <?= $active_page === 'bac'  ? 'active' : '' ?>" href="?page=bac<?= isset($_SESSION['user_id']) ? "&user_id=" . $_SESSION['user_id'] : '' ?>">🔑 &nbsp;Broken Access Control</a>
+
         </aside>
 
 
@@ -214,30 +230,30 @@ $active_page = $_GET['page'] ?? 'xss';
 
                     <?php if (isset($_SESSION['user_id'])): ?>
 
-                    <form method="POST" action="?page=xss">
-                        <label>Nội dung bình luận</label>
-                        <textarea name="comment" placeholder="Thử nhập: <script>alert('XSS!')</script>"></textarea>
-                        <button type="submit" name="send_comment">Gửi bình luận</button>
-                    </form>
+                        <form method="POST" action="?page=xss">
+                            <label>Nội dung bình luận</label>
+                            <textarea name="comment" placeholder="Thử nhập: <script>alert('XSS!')</script>"></textarea>
+                            <button type="submit" name="send_comment">Gửi bình luận</button>
+                        </form>
 
-                    <hr>
+                        <hr>
 
-                    <h3 style="font-size:13.5px;font-weight:700;color:var(--slate-700);margin-bottom:12px;">Các bình
-                        luận:</h3>
-                    <?php
-          $comments = mysqli_query($conn, "SELECT * FROM comments ORDER BY id DESC");
-          while ($row = mysqli_fetch_assoc($comments)) {
-              // LỖI XSS: In trực tiếp không dùng htmlspecialchars()
-              echo "<div class='comment-item'>" . $row['content'] . "</div>";
-          }
-          ?>
+                        <h3 style="font-size:13.5px;font-weight:700;color:var(--slate-700);margin-bottom:12px;">Các bình
+                            luận:</h3>
+                        <?php
+                        $comments = mysqli_query($conn, "SELECT * FROM comments ORDER BY id DESC");
+                        while ($row = mysqli_fetch_assoc($comments)) {
+                            // LỖI XSS: In trực tiếp không dùng htmlspecialchars()
+                            echo "<div class='comment-item'>" . $row['content'] . "</div>";
+                        }
+                        ?>
 
                     <?php else: ?>
-                    <p style="text-align:center;padding:24px 0;font-size:14px;color:var(--slate-400);">
-                        🔒 <a href="#" onclick="document.getElementById('modal').classList.add('show')"
-                            style="color:var(--sky);font-weight:600;text-decoration:none;">Đăng nhập</a> để gửi bình
-                        luận
-                    </p>
+                        <p style="text-align:center;padding:24px 0;font-size:14px;color:var(--slate-400);">
+                            🔒 <a href="#" onclick="document.getElementById('modal').classList.add('show')"
+                                style="color:var(--sky);font-weight:600;text-decoration:none;">Đăng nhập</a> để gửi bình
+                            luận
+                        </p>
                     <?php endif; ?>
 
                 </div>
@@ -281,40 +297,40 @@ $active_page = $_GET['page'] ?? 'xss';
                 <div class="card-header">💸 Chuyển tiền</div>
 
                 <?php if ($csrf_err): ?>
-                <p
-                    style="color:<?= str_contains($csrf_err, 'CSRF') ? '#dc2626' : 'red' ?>;font-size:13.5px;margin:16px 20px 0;
+                    <p
+                        style="color:<?= str_contains($csrf_err, 'CSRF') ? '#dc2626' : 'red' ?>;font-size:13.5px;margin:16px 20px 0;
                     <?= str_contains($csrf_err, 'CSRF') ? 'background:#fef2f2;padding:10px 14px;border-radius:7px;border:1px solid rgba(239,68,68,.2);' : '' ?>">
-                    ⚠️ <?= $csrf_err ?></p>
+                        ⚠️ <?= $csrf_err ?></p>
                 <?php endif; ?>
 
                 <div class="card-body">
                     <?php if (isset($_SESSION['user_id'])): ?>
 
-                    <?php if ($csrf_msg): ?>
-                    <p style="color:green;font-weight:600;font-size:13.5px;margin-bottom:14px;">✅ <?= $csrf_msg ?></p>
-                    <?php endif; ?>
-
-                    <p style="font-size:13px;color:var(--slate-500);margin-bottom:16px;">
-                        Đang chuyển từ tài khoản: <strong><?= $_SESSION['username'] ?></strong>
-                    </p>
-
-                    <form method="POST" action="?page=csrf">
-                        <?php if ($csrf_protected): ?>
-                        <!-- Token được nhúng vào form khi bật bảo vệ -->
-                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                        <?php if ($csrf_msg): ?>
+                            <p style="color:green;font-weight:600;font-size:13.5px;margin-bottom:14px;">✅ <?= $csrf_msg ?></p>
                         <?php endif; ?>
-                        <label>Tới user ID</label>
-                        <input type="number" name="to" placeholder="ID người nhận">
-                        <label>Số tiền ($)</label>
-                        <input type="number" name="amount" placeholder="Nhập số tiền">
-                        <button type="submit" name="transfer">Chuyển tiền</button>
-                    </form>
+
+                        <p style="font-size:13px;color:var(--slate-500);margin-bottom:16px;">
+                            Đang chuyển từ tài khoản: <strong><?= $_SESSION['username'] ?></strong>
+                        </p>
+
+                        <form method="POST" action="?page=csrf">
+                            <?php if ($csrf_protected): ?>
+                                <!-- Token được nhúng vào form khi bật bảo vệ -->
+                                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                            <?php endif; ?>
+                            <label>Tới user ID</label>
+                            <input type="number" name="to" placeholder="ID người nhận">
+                            <label>Số tiền ($)</label>
+                            <input type="number" name="amount" placeholder="Nhập số tiền">
+                            <button type="submit" name="transfer">Chuyển tiền</button>
+                        </form>
 
                     <?php else: ?>
-                    <p style="text-align:center;padding:24px 0;font-size:14px;color:var(--slate-400);">
-                        🔒 <a href="#" onclick="document.getElementById('modal').classList.add('show')"
-                            style="color:var(--sky);font-weight:600;text-decoration:none;">Đăng nhập</a> để chuyển tiền
-                    </p>
+                        <p style="text-align:center;padding:24px 0;font-size:14px;color:var(--slate-400);">
+                            🔒 <a href="#" onclick="document.getElementById('modal').classList.add('show')"
+                                style="color:var(--sky);font-weight:600;text-decoration:none;">Đăng nhập</a> để chuyển tiền
+                        </p>
                     <?php endif; ?>
                 </div>
             </div>
@@ -331,65 +347,57 @@ $active_page = $_GET['page'] ?? 'xss';
             <p class="page-subtitle">Sửa đổi thông tin của bất kỳ user nào qua ID trên URL</p>
 
             <div class="card">
-                <div class="card-header">🛠️ Quản lý tài khoản cá nhân</div>                
-                
-                <div class="card-body">
-                    
-                    <?php if (isset($_GET['success']) && $_GET['success'] == '1'): ?>
-                        <div style="
-                            background-color: #d4edda; 
-                            color: #155724; 
-                            padding: 12px; 
-                            border: 1px solid #c3e6cb; 
-                            border-radius: 8px; 
-                            margin-bottom: 20px;
-                            font-size: 14px;
-                            display: flex;
-                            align-items: center;
-                        ">
-                            <strong>Thành công!</strong> &nbsp; Thông tin của User ID <?= htmlspecialchars($_GET['user_id']) ?> đã được cập nhật.
-                        </div>
-                    <?php endif; ?>
+                <div class="card-header">🛠️ Quản lý tài khoản cá nhân</div>
 
+                <div class="card-body">
                     <?php if (isset($_SESSION['user_id'])): ?>
 
                         <?php if ($idor_user): ?>
-                            <!-- Form cập nhật thông tin -->
-                            <form method="POST" action="handle/update_profile.php?user_id=<?= $_GET['user_id'] ?>" style="margin-bottom: 20px;">
-                                <div style="margin-bottom: 12px;">
-                                    <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">Username hiện tại:</label>
-                                    <input type="text" name="new_username" value="<?= htmlspecialchars($idor_user['username']) ?>" 
-                                        style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
-                                </div>
+                            <!-- PHẦN 1: Hiển thị thông tin tĩnh -->
+                            <div id="info-display">
+                                <p style="font-size:13.5px;margin-bottom:8px;"><strong>Username:</strong>
+                                    <?= htmlspecialchars($idor_user['username']) ?></p>
+                                <p style="font-size:13.5px;margin-bottom:16px;"><strong>Số dư ví:</strong>
+                                    <span style="color:var(--emerald); font-weight:bold;"><?= number_format($idor_user['balance']) ?> $</span>
+                                </p>
 
-                                <div style="margin-bottom: 12px;">
-                                    <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">Mật khẩu:</label>
-                                    <input type="text" name="new_password" placeholder="Để trống nếu không đổi"
-                                        style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
-                                </div>
-                                
-                                <div style="margin-bottom: 16px;">
-                                    <p style="font-size:13.5px;"><strong>Số dư ví:</strong> 
-                                        <span style="color:var(--emerald); font-weight:bold;"><?= number_format($idor_user['balance']) ?> $</span>
-                                    </p>
-                                </div>
-
-                                <button type="submit" 
-                                        style="background:var(--sky); color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:600;">
-                                    Cập nhật thông tin
+                                <button type="button" onclick="showEditForm()"
+                                    style="background:var(--slate-800); color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:600; margin-bottom: 20px;">
+                                    ✏️ Chỉnh sửa thông tin
                                 </button>
-                            </form>
+                            </div>
+                            <!-- PHẦN 2: Form cập nhật thông tin (Mặc định ẩn) -->
+                            <div id="edit-form" style="display: none;margin-top: 7px;">
+                                <h4 style="font-size: 14px; margin: 15px 0 10px 0;">Cập nhật hồ sơ</h4>
+                                <form method="POST" action="handle/update_profile.php?user_id=<?= $_GET['user_id'] ?>" style="margin-bottom: 20px;">
+                                    <div style="margin-bottom: 12px;">
+                                        <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">Username mới:</label>
+                                        <input type="text" name="new_username" value="<?= htmlspecialchars($idor_user['username']) ?>"
+                                            style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                                    </div>
+
+                                    <div style="margin-bottom: 12px;">
+                                        <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">Mật khẩu mới:</label>
+                                        <input type="password" name="new_password" placeholder="Để trống nếu không đổi"
+                                            style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                                    </div>
+
+                                    <div style="display: flex; gap: 10px;">
+                                        <button type="submit"
+                                            style="background:var(--sky); color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:600;">
+                                            Lưu thay đổi
+                                        </button>
+                                        <button type="button" onclick="hideEditForm()"
+                                            style="background:var(--slate-200); color:var(--slate-700); border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:600;">
+                                            Hủy
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+
                         <?php else: ?>
                             <p style="color:red; font-size:13.5px; margin-bottom:16px;">❌ Không tìm thấy user.</p>
                         <?php endif; ?>
-
-                        <!-- Box hướng dẫn tấn công -->
-                        <!-- <p style="font-size:13px; color:var(--orange); font-weight:600; background:var(--orange-pale); border:1px solid rgba(249,115,22,.2); border-radius:8px; padding:12px 14px;">
-                            💡 <b>Kịch bản tấn công:</b><br>
-                            1. Đăng nhập vào tài khoản của bạn.<br>
-                            2. Thay đổi <code>user_id=1</code> trên URL.<br>
-                            3. Đổi tên của Admin và nhấn "Cập nhật" để thấy lỗi IDOR thực thi!
-                        </p> -->
 
                     <?php else: ?>
                         <p style="text-align:center; padding:24px 0; font-size:14px; color:var(--slate-400);">
@@ -399,7 +407,8 @@ $active_page = $_GET['page'] ?? 'xss';
                     <?php endif; ?>
                 </div>
             </div>
-        </main>
+    </div>
+    </main>
 
     </div>
 
@@ -437,9 +446,9 @@ $active_page = $_GET['page'] ?? 'xss';
             <!-- FORM ĐĂNG NHẬP -->
             <div id="form-login">
                 <?php if ($login_error): ?>
-                <p
-                    style="color:var(--red);font-size:13px;margin-bottom:12px;background:var(--red-pale);padding:10px 14px;border-radius:7px;">
-                    ⚠️ <?= $login_error ?></p>
+                    <p
+                        style="color:var(--red);font-size:13px;margin-bottom:12px;background:var(--red-pale);padding:10px 14px;border-radius:7px;">
+                        ⚠️ <?= $login_error ?></p>
                 <?php endif; ?>
                 <form method="POST" action="?page=<?= $active_page ?>" id="frmLogin">
                     <label
@@ -449,7 +458,7 @@ $active_page = $_GET['page'] ?? 'xss';
                     <div style="position: relative">
                         <input type="password" name="password" id="password" placeholder="••••••••••" required>
                         <span onclick="togglePassword()" style="position:absolute;right:17px;top:40%;transform:translateY(-50%);cursor:pointer;">👁️
-        </span>
+                        </span>
                     </div>
                     <button type="submit" name="do_login"
                         style="width:100%;padding:12px;font-size:14.5px;margin-top:4px;">🔐 Đăng nhập</button>
@@ -459,14 +468,14 @@ $active_page = $_GET['page'] ?? 'xss';
             <!-- FORM ĐĂNG KÝ -->
             <div id="form-register" style="display:none;">
                 <?php if ($register_error): ?>
-                <p
-                    style="color:var(--red);font-size:13px;margin-bottom:12px;background:var(--red-pale);padding:10px 14px;border-radius:7px;">
-                    ⚠️ <?= $register_error ?></p>
+                    <p
+                        style="color:var(--red);font-size:13px;margin-bottom:12px;background:var(--red-pale);padding:10px 14px;border-radius:7px;">
+                        ⚠️ <?= $register_error ?></p>
                 <?php endif; ?>
                 <?php if ($register_ok): ?>
-                <p
-                    style="color:green;font-size:13px;margin-bottom:12px;background:var(--green-pale);padding:10px 14px;border-radius:7px;">
-                    ✅ <?= $register_ok ?></p>
+                    <p
+                        style="color:green;font-size:13px;margin-bottom:12px;background:var(--green-pale);padding:10px 14px;border-radius:7px;">
+                        ✅ <?= $register_ok ?></p>
                 <?php endif; ?>
                 <form method="POST" action="?page=<?= $active_page ?>">
                     <label
@@ -484,47 +493,57 @@ $active_page = $_GET['page'] ?? 'xss';
     </div>
 
     <script>
-    function switchTab(tab) {
-        const isLogin = tab === 'login';
-        document.getElementById('form-login').style.display = isLogin ? 'block' : 'none';
-        document.getElementById('form-register').style.display = isLogin ? 'none' : 'block';
-        document.getElementById('tab-login').style.background = isLogin ? 'var(--sky)' : 'var(--slate-100)';
-        document.getElementById('tab-login').style.color = isLogin ? 'white' : 'var(--slate-500)';
-        document.getElementById('tab-register').style.background = isLogin ? 'var(--slate-100)' : 'var(--sky)';
-        document.getElementById('tab-register').style.color = isLogin ? 'var(--slate-500)' : 'white';
-    }
-    <?php if ($register_error || $register_ok): ?>
-    switchTab('register');
-    <?php endif; ?>
-
-    document.getElementById("frmLogin").addEventListener("submit", function(e) {
-        e.preventDefault();
-
-        const formData = new FormData(this);
-        formData.append("do_login", "1");
-        fetch("?page=<?= $active_page ?>", {  
-            method: "POST",
-            body: formData
-        })
-        .then(res => res.json())
-        .then(data => {
-            if(data.success){
-                 window.location.href = "?page=xss";
-            } else {
-                alert(data.message);
-            }
-        })
-
-    });
-
-    function togglePassword() {
-        const ele = document.getElementById("password");
-        if(ele.type === "password"){
-            ele.type = "text";
-        }else{
-            ele.type = "password";
+        function switchTab(tab) {
+            const isLogin = tab === 'login';
+            document.getElementById('form-login').style.display = isLogin ? 'block' : 'none';
+            document.getElementById('form-register').style.display = isLogin ? 'none' : 'block';
+            document.getElementById('tab-login').style.background = isLogin ? 'var(--sky)' : 'var(--slate-100)';
+            document.getElementById('tab-login').style.color = isLogin ? 'white' : 'var(--slate-500)';
+            document.getElementById('tab-register').style.background = isLogin ? 'var(--slate-100)' : 'var(--sky)';
+            document.getElementById('tab-register').style.color = isLogin ? 'var(--slate-500)' : 'white';
         }
-    }
+        <?php if ($register_error || $register_ok): ?>
+            switchTab('register');
+        <?php endif; ?>
+
+        document.getElementById("frmLogin").addEventListener("submit", function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            formData.append("do_login", "1");
+            fetch("?page=<?= $active_page ?>", {
+                    method: "POST",
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = "?page=xss";
+                    } else {
+                        alert(data.message);
+                    }
+                })
+
+        });
+
+        function togglePassword() {
+            const ele = document.getElementById("password");
+            if (ele.type === "password") {
+                ele.type = "text";
+            } else {
+                ele.type = "password";
+            }
+        }
+
+        function showEditForm() {
+            document.getElementById('info-display').style.display = 'none';
+            document.getElementById('edit-form').style.display = 'block';
+        }
+
+        function hideEditForm() {
+            document.getElementById('info-display').style.display = 'block';
+            document.getElementById('edit-form').style.display = 'none';
+        }
     </script>
 
 </body>
