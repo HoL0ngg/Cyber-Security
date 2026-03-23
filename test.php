@@ -133,23 +133,29 @@ $idor_user = null;
 //     $idor_user = mysqli_fetch_assoc($res_idor);
 // }
 
-// PREVENT IDOR 
-$user_id_from_url = isset($_GET['user_id']) ? $_GET['user_id'] : null;
-$current_session_id = $_SESSION['user_id'];
-if ($user_id_from_url != $current_session_id) {
-    // echo "<div class='alert-danger'>Bạn không có quyền xem hồ sơ này!</div>";
-    echo "<script>alert('Bạn không có quyền xem thông tin của user khác')</script>";
-}
-$qry  = "SELECT * FROM users WHERE id = ?";
-
-$stmt = $conn->prepare($qry);
-$stmt->bind_param("i", $current_session_id);
-$stmt->execute();
-
-$result = $stmt->get_result();
-$idor_user = $result->fetch_assoc();
-
 $active_page = $_GET['page'] ?? 'xss';
+$show_idor_alert = false;
+// PREVENT IDOR 
+if ($active_page === 'bac') {
+    $user_id_from_url = isset($_GET['user_id']) ? $_GET['user_id'] : null;
+    $current_session_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
+
+    if ($user_id_from_url != $current_session_id && $user_id_from_url !== null) {
+        $show_idor_alert = true;
+        $target_id = $current_session_id;
+    } else {
+        $target_id = $user_id_from_url;
+    }
+    $qry  = "SELECT * FROM users WHERE id = ?";
+
+    $stmt = $conn->prepare($qry);
+    $stmt->bind_param("i", $target_id);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+    $idor_user = $result->fetch_assoc();
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -165,7 +171,16 @@ $active_page = $_GET['page'] ?? 'xss';
 </head>
 
 <body>
-
+    <?php if ($show_idor_alert): ?>
+        <script>
+            // Sử dụng setTimeout để đảm bảo trang đã load xong mới hiện alert
+            window.onload = function() {
+                alert('Cảnh báo bảo mật: Bạn không có quyền xem thông tin của user khác!');
+                // Sau khi alert xong, có thể điều hướng về đúng URL an toàn để thanh địa chỉ trông sạch sẽ
+                window.location.href = "?page=bac&user_id=<?= $current_session_id ?>";
+            };
+        </script>
+    <?php endif; ?>
     <!-- HEADER -->
     <header>
         <div class="logo">
