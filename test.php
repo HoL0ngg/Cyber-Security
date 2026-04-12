@@ -172,14 +172,14 @@ if ($active_page === 'bac') {
 
 <body>
     <?php if ($show_idor_alert): ?>
-        <script>
-            // Sử dụng setTimeout để đảm bảo trang đã load xong mới hiện alert
-            window.onload = function() {
-                alert('Cảnh báo bảo mật: Bạn không có quyền xem thông tin của user khác!');
-                // Sau khi alert xong, có thể điều hướng về đúng URL an toàn để thanh địa chỉ trông sạch sẽ
-                window.location.href = "?page=bac&user_id=<?= $current_session_id ?>";
-            };
-        </script>
+    <script>
+    // Sử dụng setTimeout để đảm bảo trang đã load xong mới hiện alert
+    window.onload = function() {
+        alert('Cảnh báo bảo mật: Bạn không có quyền xem thông tin của user khác!');
+        // Sau khi alert xong, có thể điều hướng về đúng URL an toàn để thanh địa chỉ trông sạch sẽ
+        window.location.href = "?page=bac&user_id=<?= $current_session_id ?>";
+    };
+    </script>
     <?php endif; ?>
     <!-- HEADER -->
     <header>
@@ -194,23 +194,23 @@ if ($active_page === 'bac') {
         </div>
 
         <?php if (isset($_SESSION['user_id'])): ?>
-            <div style="display:flex;align-items:center;gap:12px;">
-                <span style="font-size:13.5px;color:var(--slate-500);">👤
-                    <strong><?= $_SESSION['username'] ?></strong></span>
-                <a href="?logout=1"
-                    style="background:var(--slate-100);color:var(--slate-600);border:1px solid var(--slate-200);padding:8px 16px;border-radius:7px;font-size:13px;font-weight:600;text-decoration:none;">Đăng
-                    xuất</a>
-            </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:13.5px;color:var(--slate-500);">👤
+                <strong><?= $_SESSION['username'] ?></strong></span>
+            <a href="?logout=1"
+                style="background:var(--slate-100);color:var(--slate-600);border:1px solid var(--slate-200);padding:8px 16px;border-radius:7px;font-size:13px;font-weight:600;text-decoration:none;">Đăng
+                xuất</a>
+        </div>
         <?php else: ?>
-            <button class="btn-login" onclick="document.getElementById('modal').classList.add('show')">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-                    <polyline points="10,17 15,12 10,7" />
-                    <line x1="15" y1="12" x2="3" y2="12" />
-                </svg>
-                Login
-            </button>
+        <button class="btn-login" onclick="document.getElementById('modal').classList.add('show')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                <polyline points="10,17 15,12 10,7" />
+                <line x1="15" y1="12" x2="3" y2="12" />
+            </svg>
+            Login
+        </button>
         <?php endif; ?>
     </header>
 
@@ -225,7 +225,9 @@ if ($active_page === 'bac') {
             <a class="nav-item <?= $active_page === 'csrf' ? 'active' : '' ?>" href="?page=csrf">🔒 &nbsp;Cross-Site
                 Request Forgery</a>
 
-            <a class="nav-item <?= $active_page === 'bac'  ? 'active' : '' ?>" href="?page=bac<?= isset($_SESSION['user_id']) ? "&user_id=" . $_SESSION['user_id'] : '' ?>">🔑 &nbsp;Broken Access Control</a>
+            <a class="nav-item <?= $active_page === 'bac'  ? 'active' : '' ?>"
+                href="?page=bac<?= isset($_SESSION['user_id']) ? "&user_id=" . $_SESSION['user_id'] : '' ?>">🔑
+                &nbsp;Broken Access Control</a>
 
         </aside>
 
@@ -245,17 +247,17 @@ if ($active_page === 'bac') {
 
                     <?php if (isset($_SESSION['user_id'])): ?>
 
-                        <form method="POST" action="?page=xss">
-                            <label>Nội dung bình luận</label>
-                            <textarea name="comment" placeholder="Thử nhập: <script>alert('XSS!')</script>"></textarea>
-                            <button type="submit" name="send_comment">Gửi bình luận</button>
-                        </form>
+                    <form method="POST" action="?page=xss">
+                        <label>Nội dung bình luận</label>
+                        <textarea name="comment" placeholder="Thử nhập: <script>alert('XSS!')</script>"></textarea>
+                        <button type="submit" name="send_comment">Gửi bình luận</button>
+                    </form>
 
-                        <hr>
+                    <hr>
 
-                        <h3 style="font-size:13.5px;font-weight:700;color:var(--slate-700);margin-bottom:12px;">Các bình
-                            luận:</h3>
-                        <?php
+                    <h3 style="font-size:13.5px;font-weight:700;color:var(--slate-700);margin-bottom:12px;">Các bình
+                        luận:</h3>
+                    <?php
                         $comments = mysqli_query($conn, "SELECT * FROM comments ORDER BY id DESC");
                         while ($row = mysqli_fetch_assoc($comments)) {
                             // LỖI XSS: In trực tiếp không dùng htmlspecialchars()
@@ -264,11 +266,11 @@ if ($active_page === 'bac') {
                         ?>
 
                     <?php else: ?>
-                        <p style="text-align:center;padding:24px 0;font-size:14px;color:var(--slate-400);">
-                            🔒 <a href="#" onclick="document.getElementById('modal').classList.add('show')"
-                                style="color:var(--sky);font-weight:600;text-decoration:none;">Đăng nhập</a> để gửi bình
-                            luận
-                        </p>
+                    <p style="text-align:center;padding:24px 0;font-size:14px;color:var(--slate-400);">
+                        🔒 <a href="#" onclick="document.getElementById('modal').classList.add('show')"
+                            style="color:var(--sky);font-weight:600;text-decoration:none;">Đăng nhập</a> để gửi bình
+                        luận
+                    </p>
                     <?php endif; ?>
 
                 </div>
@@ -312,40 +314,40 @@ if ($active_page === 'bac') {
                 <div class="card-header">💸 Chuyển tiền</div>
 
                 <?php if ($csrf_err): ?>
-                    <p
-                        style="color:<?= str_contains($csrf_err, 'CSRF') ? '#dc2626' : 'red' ?>;font-size:13.5px;margin:16px 20px 0;
+                <p
+                    style="color:<?= str_contains($csrf_err, 'CSRF') ? '#dc2626' : 'red' ?>;font-size:13.5px;margin:16px 20px 0;
                     <?= str_contains($csrf_err, 'CSRF') ? 'background:#fef2f2;padding:10px 14px;border-radius:7px;border:1px solid rgba(239,68,68,.2);' : '' ?>">
-                        ⚠️ <?= $csrf_err ?></p>
+                    ⚠️ <?= $csrf_err ?></p>
                 <?php endif; ?>
 
                 <div class="card-body">
                     <?php if (isset($_SESSION['user_id'])): ?>
 
-                        <?php if ($csrf_msg): ?>
-                            <p style="color:green;font-weight:600;font-size:13.5px;margin-bottom:14px;">✅ <?= $csrf_msg ?></p>
+                    <?php if ($csrf_msg): ?>
+                    <p style="color:green;font-weight:600;font-size:13.5px;margin-bottom:14px;">✅ <?= $csrf_msg ?></p>
+                    <?php endif; ?>
+
+                    <p style="font-size:13px;color:var(--slate-500);margin-bottom:16px;">
+                        Đang chuyển từ tài khoản: <strong><?= $_SESSION['username'] ?></strong>
+                    </p>
+
+                    <form method="POST" action="?page=csrf">
+                        <?php if ($csrf_protected): ?>
+                        <!-- Token được nhúng vào form khi bật bảo vệ -->
+                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                         <?php endif; ?>
-
-                        <p style="font-size:13px;color:var(--slate-500);margin-bottom:16px;">
-                            Đang chuyển từ tài khoản: <strong><?= $_SESSION['username'] ?></strong>
-                        </p>
-
-                        <form method="POST" action="?page=csrf">
-                            <?php if ($csrf_protected): ?>
-                                <!-- Token được nhúng vào form khi bật bảo vệ -->
-                                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
-                            <?php endif; ?>
-                            <label>Tới user ID</label>
-                            <input type="number" name="to" placeholder="ID người nhận">
-                            <label>Số tiền ($)</label>
-                            <input type="number" name="amount" placeholder="Nhập số tiền">
-                            <button type="submit" name="transfer">Chuyển tiền</button>
-                        </form>
+                        <label>Tới user ID</label>
+                        <input type="number" name="to" placeholder="ID người nhận">
+                        <label>Số tiền ($)</label>
+                        <input type="number" name="amount" placeholder="Nhập số tiền">
+                        <button type="submit" name="transfer">Chuyển tiền</button>
+                    </form>
 
                     <?php else: ?>
-                        <p style="text-align:center;padding:24px 0;font-size:14px;color:var(--slate-400);">
-                            🔒 <a href="#" onclick="document.getElementById('modal').classList.add('show')"
-                                style="color:var(--sky);font-weight:600;text-decoration:none;">Đăng nhập</a> để chuyển tiền
-                        </p>
+                    <p style="text-align:center;padding:24px 0;font-size:14px;color:var(--slate-400);">
+                        🔒 <a href="#" onclick="document.getElementById('modal').classList.add('show')"
+                            style="color:var(--sky);font-weight:600;text-decoration:none;">Đăng nhập</a> để chuyển tiền
+                    </p>
                     <?php endif; ?>
                 </div>
             </div>
@@ -367,58 +369,66 @@ if ($active_page === 'bac') {
                 <div class="card-body">
                     <?php if (isset($_SESSION['user_id'])): ?>
 
-                        <?php if ($idor_user): ?>
-                            <!-- PHẦN 1: Hiển thị thông tin tĩnh -->
-                            <div id="info-display">
-                                <p style="font-size:13.5px;margin-bottom:8px;"><strong>Username:</strong>
-                                    <?= htmlspecialchars($idor_user['username']) ?></p>
-                                <p style="font-size:13.5px;margin-bottom:16px;"><strong>Số dư ví:</strong>
-                                    <span style="color:var(--emerald); font-weight:bold;"><?= number_format($idor_user['balance']) ?> $</span>
-                                </p>
+                    <?php if ($idor_user): ?>
+                    <!-- PHẦN 1: Hiển thị thông tin tĩnh -->
+                    <div id="info-display">
+                        <p style="font-size:13.5px;margin-bottom:8px;"><strong>Username:</strong>
+                            <?= htmlspecialchars($idor_user['username']) ?></p>
+                        <p style="font-size:13.5px;margin-bottom:16px;"><strong>Số dư ví:</strong>
+                            <span
+                                style="color:var(--emerald); font-weight:bold;"><?= number_format($idor_user['balance']) ?>
+                                $</span>
+                        </p>
 
-                                <button type="button" onclick="showEditForm()"
-                                    style="background:var(--slate-800); color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:600; margin-bottom: 20px;">
-                                    ✏️ Chỉnh sửa thông tin
+                        <button type="button" onclick="showEditForm()"
+                            style="background:var(--slate-800); color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:600; margin-bottom: 20px;">
+                            ✏️ Chỉnh sửa thông tin
+                        </button>
+                    </div>
+                    <!-- PHẦN 2: Form cập nhật thông tin (Mặc định ẩn) -->
+                    <div id="edit-form" style="display: none;margin-top: 7px;">
+                        <h4 style="font-size: 14px; margin: 15px 0 10px 0;">Cập nhật hồ sơ</h4>
+                        <form method="POST" action="handle/update_profile.php?user_id=<?= $_GET['user_id'] ?>"
+                            style="margin-bottom: 20px;">
+                            <div style="margin-bottom: 12px;">
+                                <label
+                                    style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">Username
+                                    mới:</label>
+                                <input type="text" name="new_username"
+                                    value="<?= htmlspecialchars($idor_user['username']) ?>"
+                                    style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                            </div>
+
+                            <div style="margin-bottom: 12px;">
+                                <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">Mật
+                                    khẩu mới:</label>
+                                <input type="password" name="new_password" placeholder="Để trống nếu không đổi"
+                                    style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                            </div>
+
+                            <div style="display: flex; gap: 10px;">
+                                <button type="submit"
+                                    style="background:var(--sky); color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:600;">
+                                    Lưu thay đổi
+                                </button>
+                                <button type="button" onclick="hideEditForm()"
+                                    style="background:var(--slate-200); color:var(--slate-700); border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:600;">
+                                    Hủy
                                 </button>
                             </div>
-                            <!-- PHẦN 2: Form cập nhật thông tin (Mặc định ẩn) -->
-                            <div id="edit-form" style="display: none;margin-top: 7px;">
-                                <h4 style="font-size: 14px; margin: 15px 0 10px 0;">Cập nhật hồ sơ</h4>
-                                <form method="POST" action="handle/update_profile.php?user_id=<?= $_GET['user_id'] ?>" style="margin-bottom: 20px;">
-                                    <div style="margin-bottom: 12px;">
-                                        <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">Username mới:</label>
-                                        <input type="text" name="new_username" value="<?= htmlspecialchars($idor_user['username']) ?>"
-                                            style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
-                                    </div>
-
-                                    <div style="margin-bottom: 12px;">
-                                        <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">Mật khẩu mới:</label>
-                                        <input type="password" name="new_password" placeholder="Để trống nếu không đổi"
-                                            style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
-                                    </div>
-
-                                    <div style="display: flex; gap: 10px;">
-                                        <button type="submit"
-                                            style="background:var(--sky); color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:600;">
-                                            Lưu thay đổi
-                                        </button>
-                                        <button type="button" onclick="hideEditForm()"
-                                            style="background:var(--slate-200); color:var(--slate-700); border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:600;">
-                                            Hủy
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-
-                        <?php else: ?>
-                            <p style="color:red; font-size:13.5px; margin-bottom:16px;">❌ Không tìm thấy user.</p>
-                        <?php endif; ?>
+                        </form>
+                    </div>
 
                     <?php else: ?>
-                        <p style="text-align:center; padding:24px 0; font-size:14px; color:var(--slate-400);">
-                            🔒 <a href="#" onclick="document.getElementById('modal').classList.add('show')"
-                                style="color:var(--sky); font-weight:600; text-decoration:none;">Đăng nhập</a> để quản lý hồ sơ
-                        </p>
+                    <p style="color:red; font-size:13.5px; margin-bottom:16px;">❌ Không tìm thấy user.</p>
+                    <?php endif; ?>
+
+                    <?php else: ?>
+                    <p style="text-align:center; padding:24px 0; font-size:14px; color:var(--slate-400);">
+                        🔒 <a href="#" onclick="document.getElementById('modal').classList.add('show')"
+                            style="color:var(--sky); font-weight:600; text-decoration:none;">Đăng nhập</a> để quản lý hồ
+                        sơ
+                    </p>
                     <?php endif; ?>
                 </div>
             </div>
@@ -461,18 +471,20 @@ if ($active_page === 'bac') {
             <!-- FORM ĐĂNG NHẬP -->
             <div id="form-login">
                 <?php if ($login_error): ?>
-                    <p
-                        style="color:var(--red);font-size:13px;margin-bottom:12px;background:var(--red-pale);padding:10px 14px;border-radius:7px;">
-                        ⚠️ <?= $login_error ?></p>
+                <p
+                    style="color:var(--red);font-size:13px;margin-bottom:12px;background:var(--red-pale);padding:10px 14px;border-radius:7px;">
+                    ⚠️ <?= $login_error ?></p>
                 <?php endif; ?>
                 <form method="POST" action="?page=<?= $active_page ?>" id="frmLogin">
                     <label
                         style="text-transform:uppercase;font-size:11.5px;letter-spacing:.6px;font-family:'Space Mono',monospace;">Username</label>
                     <input type="text" name="username" placeholder="Nhập tên đăng nhập" required>
-                    <label style="text-transform:uppercase;font-size:11.5px;letter-spacing:.6px;font-family:'Space Mono',monospace;">Password</label>
+                    <label
+                        style="text-transform:uppercase;font-size:11.5px;letter-spacing:.6px;font-family:'Space Mono',monospace;">Password</label>
                     <div style="position: relative">
                         <input type="password" name="password" id="password" placeholder="••••••••••" required>
-                        <span onclick="togglePassword()" style="position:absolute;right:17px;top:40%;transform:translateY(-50%);cursor:pointer;">👁️
+                        <span onclick="togglePassword()"
+                            style="position:absolute;right:17px;top:40%;transform:translateY(-50%);cursor:pointer;">👁️
                         </span>
                     </div>
                     <button type="submit" name="do_login"
@@ -483,14 +495,14 @@ if ($active_page === 'bac') {
             <!-- FORM ĐĂNG KÝ -->
             <div id="form-register" style="display:none;">
                 <?php if ($register_error): ?>
-                    <p
-                        style="color:var(--red);font-size:13px;margin-bottom:12px;background:var(--red-pale);padding:10px 14px;border-radius:7px;">
-                        ⚠️ <?= $register_error ?></p>
+                <p
+                    style="color:var(--red);font-size:13px;margin-bottom:12px;background:var(--red-pale);padding:10px 14px;border-radius:7px;">
+                    ⚠️ <?= $register_error ?></p>
                 <?php endif; ?>
                 <?php if ($register_ok): ?>
-                    <p
-                        style="color:green;font-size:13px;margin-bottom:12px;background:var(--green-pale);padding:10px 14px;border-radius:7px;">
-                        ✅ <?= $register_ok ?></p>
+                <p
+                    style="color:green;font-size:13px;margin-bottom:12px;background:var(--green-pale);padding:10px 14px;border-radius:7px;">
+                    ✅ <?= $register_ok ?></p>
                 <?php endif; ?>
                 <form method="POST" action="?page=<?= $active_page ?>">
                     <label
@@ -508,57 +520,57 @@ if ($active_page === 'bac') {
     </div>
 
     <script>
-        function switchTab(tab) {
-            const isLogin = tab === 'login';
-            document.getElementById('form-login').style.display = isLogin ? 'block' : 'none';
-            document.getElementById('form-register').style.display = isLogin ? 'none' : 'block';
-            document.getElementById('tab-login').style.background = isLogin ? 'var(--sky)' : 'var(--slate-100)';
-            document.getElementById('tab-login').style.color = isLogin ? 'white' : 'var(--slate-500)';
-            document.getElementById('tab-register').style.background = isLogin ? 'var(--slate-100)' : 'var(--sky)';
-            document.getElementById('tab-register').style.color = isLogin ? 'var(--slate-500)' : 'white';
+    function switchTab(tab) {
+        const isLogin = tab === 'login';
+        document.getElementById('form-login').style.display = isLogin ? 'block' : 'none';
+        document.getElementById('form-register').style.display = isLogin ? 'none' : 'block';
+        document.getElementById('tab-login').style.background = isLogin ? 'var(--sky)' : 'var(--slate-100)';
+        document.getElementById('tab-login').style.color = isLogin ? 'white' : 'var(--slate-500)';
+        document.getElementById('tab-register').style.background = isLogin ? 'var(--slate-100)' : 'var(--sky)';
+        document.getElementById('tab-register').style.color = isLogin ? 'var(--slate-500)' : 'white';
+    }
+    <?php if ($register_error || $register_ok): ?>
+    switchTab('register');
+    <?php endif; ?>
+
+    document.getElementById("frmLogin").addEventListener("submit", function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        formData.append("do_login", "1");
+        fetch("?page=<?= $active_page ?>", {
+                method: "POST",
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = "?page=xss";
+                } else {
+                    alert(data.message);
+                }
+            })
+
+    });
+
+    function togglePassword() {
+        const ele = document.getElementById("password");
+        if (ele.type === "password") {
+            ele.type = "text";
+        } else {
+            ele.type = "password";
         }
-        <?php if ($register_error || $register_ok): ?>
-            switchTab('register');
-        <?php endif; ?>
+    }
 
-        document.getElementById("frmLogin").addEventListener("submit", function(e) {
-            e.preventDefault();
+    function showEditForm() {
+        document.getElementById('info-display').style.display = 'none';
+        document.getElementById('edit-form').style.display = 'block';
+    }
 
-            const formData = new FormData(this);
-            formData.append("do_login", "1");
-            fetch("?page=<?= $active_page ?>", {
-                    method: "POST",
-                    body: formData
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        window.location.href = "?page=xss";
-                    } else {
-                        alert(data.message);
-                    }
-                })
-
-        });
-
-        function togglePassword() {
-            const ele = document.getElementById("password");
-            if (ele.type === "password") {
-                ele.type = "text";
-            } else {
-                ele.type = "password";
-            }
-        }
-
-        function showEditForm() {
-            document.getElementById('info-display').style.display = 'none';
-            document.getElementById('edit-form').style.display = 'block';
-        }
-
-        function hideEditForm() {
-            document.getElementById('info-display').style.display = 'block';
-            document.getElementById('edit-form').style.display = 'none';
-        }
+    function hideEditForm() {
+        document.getElementById('info-display').style.display = 'block';
+        document.getElementById('edit-form').style.display = 'none';
+    }
     </script>
 
 </body>
