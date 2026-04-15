@@ -74,11 +74,31 @@ if (isset($_GET['logout'])) {
 //     exit;
 // }
 
+// ── TOGGLE XSS PROTECTION ──
+if (isset($_POST['toggle_xss'])) {
+    $_SESSION['xss_protected'] = !($_SESSION['xss_protected'] ?? false);
+    header("Location: ?page=xss");
+    exit;
+}
+$xss_protected = $_SESSION['xss_protected'] ?? false;
+
 // ── XSS: Gửi bình luận ──
+$xss_msg = '';
 if (isset($_POST['send_comment'])) {
-    $comment = $_POST['comment'];
-    // LỖI XSS: Không lọc dữ liệu
-    mysqli_query($conn, "INSERT INTO comments (content) VALUES ('$comment')");
+    $comment = trim($_POST['comment'] ?? '');
+
+    if ($comment !== '') {
+        $stmt = $conn->prepare("INSERT INTO comments (content) VALUES (?)");
+        if ($stmt) {
+            $stmt->bind_param("s", $comment);
+            $stmt->execute();
+            $stmt->close();
+        }
+
+        $xss_msg = $xss_protected
+            ? 'Đã lưu bình luận. Script sẽ không chạy vì đầu ra được mã hóa.'
+            : 'Đã lưu bình luận.';
+    }
 }
 
 // ── TOGGLE CSRF PROTECTION ──
@@ -134,6 +154,10 @@ if ($view_id) {
 }
 
 $active_page = $_GET['page'] ?? 'xss';
+$allowed_pages = ['xss', 'csrf', 'bac'];
+if (!in_array($active_page, $allowed_pages, true)) {
+    $active_page = 'xss';
+}
 $show_idor_alert = false;
 // PREVENT IDOR 
 // if ($active_page === 'bac') {
@@ -196,7 +220,7 @@ $show_idor_alert = false;
         <?php if (isset($_SESSION['user_id'])): ?>
             <div style="display:flex;align-items:center;gap:12px;">
                 <span style="font-size:13.5px;color:var(--slate-500);">👤
-                    <strong><?= $_SESSION['username'] ?></strong></span>
+                    <strong><?= htmlspecialchars($_SESSION['username'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></strong></span>
                 <a href="?logout=1"
                     style="background:var(--slate-100);color:var(--slate-600);border:1px solid var(--slate-200);padding:8px 16px;border-radius:7px;font-size:13px;font-weight:600;text-decoration:none;">Đăng
                     xuất</a>
@@ -235,17 +259,44 @@ $show_idor_alert = false;
         <!-- PAGE: XSS -->
         <main <?= $active_page === 'xss' ? 'class="active"' : '' ?>>
             <div class="breadcrumb">Security › <span>Cross-Site Scripting</span></div>
-            <h1 class="page-title">
-                Cross-Site Scripting
-                <span class="severity-badge badge-high">⚠ HIGH RISK</span>
-            </h1>
-            <p class="page-subtitle">Nhập script vào ô bình luận để quan sát lỗ hổng XSS</p>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:4px;">
+                <h1 class="page-title" style="margin:0;">
+                    Cross-Site Scripting
+                    <span class="severity-badge badge-high">⚠ HIGH RISK</span>
+                </h1>
+
+                <form method="POST" action="?page=xss" style="flex-shrink:0;">
+                    <input type="hidden" name="toggle_xss" value="1">
+                    <button type="submit" style="
+                        display:flex;align-items:center;gap:8px;
+                        padding:8px 16px;border-radius:8px;border:none;cursor:pointer;
+                        font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;
+                        background:<?= $xss_protected ? '#f0fdf4' : '#fef2f2' ?>;
+                        color:<?= $xss_protected ? '#15803d' : '#dc2626' ?>;
+                        border:1.5px solid <?= $xss_protected ? 'rgba(34,197,94,.3)' : 'rgba(239,68,68,.3)' ?>;">
+                        <span
+                            style="width:10px;height:10px;border-radius:50%;background:<?= $xss_protected ? '#22c55e' : '#ef4444' ?>;display:inline-block;"></span>
+                        <?= $xss_protected ? '🛡️ Đang bảo vệ' : '⚠️ Đang bị tấn công' ?>
+                    </button>
+                </form>
+            </div>
+            <p class="page-subtitle">
+                <?= $xss_protected
+                    ? '✅ Đang dùng htmlspecialchars() khi hiển thị bình luận. Script sẽ được hiển thị như văn bản.'
+                    : '❌ Chưa mã hóa đầu ra. Script có thể chạy khi bình luận được hiển thị.' ?>
+            </p>
 
             <div class="card">
                 <div class="card-header">💬 Gửi bình luận</div>
                 <div class="card-body">
 
                     <?php if (isset($_SESSION['user_id'])): ?>
+
+                        <?php if ($xss_msg): ?>
+                            <p style="color:green;font-weight:600;font-size:13.5px;margin-bottom:14px;">✅
+                                <?= htmlspecialchars($xss_msg, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+                            </p>
+                        <?php endif; ?>
 
                         <form method="POST" action="?page=xss">
                             <label>Nội dung bình luận</label>
@@ -260,8 +311,10 @@ $show_idor_alert = false;
                         <?php
                         $comments = mysqli_query($conn, "SELECT * FROM comments ORDER BY id DESC");
                         while ($row = mysqli_fetch_assoc($comments)) {
-                            // LỖI XSS: In trực tiếp không dùng htmlspecialchars()
-                            echo "<div class='comment-item'>" . $row['content'] . "</div>";
+                            $content = $xss_protected
+                                ? htmlspecialchars($row['content'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
+                                : $row['content'];
+                            echo "<div class='comment-item'>" . $content . "</div>";
                         }
                         ?>
 
@@ -328,7 +381,7 @@ $show_idor_alert = false;
                         <?php endif; ?>
 
                         <p style="font-size:13px;color:var(--slate-500);margin-bottom:16px;">
-                            Đang chuyển từ tài khoản: <strong><?= $_SESSION['username'] ?></strong>
+                            Đang chuyển từ tài khoản: <strong><?= htmlspecialchars($_SESSION['username'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></strong>
                         </p>
 
                         <form method="POST" action="?page=csrf">
