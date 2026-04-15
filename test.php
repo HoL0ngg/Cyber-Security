@@ -109,6 +109,21 @@ if (isset($_POST['toggle_csrf'])) {
 }
 $csrf_protected = $_SESSION['csrf_protected'] ?? false;
 
+// ── TOGGLE IDOR PROTECTION ──
+if (isset($_POST['toggle_idor'])) {
+    $_SESSION['idor_protected'] = !($_SESSION['idor_protected'] ?? false);
+    $redirect_user_id = isset($_SESSION['user_id']) ? '&user_id=' . (int)$_SESSION['user_id'] : '';
+    header("Location: ?page=bac" . $redirect_user_id);
+    exit;
+}
+$idor_protected = $_SESSION['idor_protected'] ?? false;
+
+$active_page = $_GET['page'] ?? 'xss';
+$allowed_pages = ['xss', 'csrf', 'bac'];
+if (!in_array($active_page, $allowed_pages, true)) {
+    $active_page = 'xss';
+}
+
 
 // ── CSRF: Chuyển tiền ──
 $csrf_msg = '';
@@ -147,38 +162,20 @@ if (isset($_POST['transfer']) && isset($_SESSION['user_id'])) {
 
 // ── BAC / IDOR ──
 $idor_user = null;
-$view_id   = $_GET['user_id'] ?? ($_SESSION['user_id'] ?? null);
+$current_session_id = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
+$requested_view_id = isset($_GET['user_id']) ? (int)$_GET['user_id'] : null;
+$view_id = $requested_view_id ?? $current_session_id;
+$show_idor_alert = false;
+
+if ($active_page === 'bac' && $idor_protected && $current_session_id && $requested_view_id !== null && $requested_view_id !== $current_session_id) {
+    $show_idor_alert = true;
+    $view_id = $current_session_id;
+}
+
 if ($view_id) {
-    $res_idor  = mysqli_query($conn, "SELECT * FROM users WHERE id = $view_id");
+    $res_idor  = mysqli_query($conn, "SELECT * FROM users WHERE id = " . (int)$view_id);
     $idor_user = mysqli_fetch_assoc($res_idor);
 }
-
-$active_page = $_GET['page'] ?? 'xss';
-$allowed_pages = ['xss', 'csrf', 'bac'];
-if (!in_array($active_page, $allowed_pages, true)) {
-    $active_page = 'xss';
-}
-$show_idor_alert = false;
-// PREVENT IDOR 
-// if ($active_page === 'bac') {
-//     $user_id_from_url = isset($_GET['user_id']) ? $_GET['user_id'] : null;
-//     $current_session_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
-
-//     if ($user_id_from_url != $current_session_id && $user_id_from_url !== null) {
-//         $show_idor_alert = true;
-//         $target_id = $current_session_id;
-//     } else {
-//         $target_id = $user_id_from_url;
-//     }
-//     $qry  = "SELECT * FROM users WHERE id = ?";
-
-//     $stmt = $conn->prepare($qry);
-//     $stmt->bind_param("i", $target_id);
-//     $stmt->execute();
-
-//     $result = $stmt->get_result();
-//     $idor_user = $result->fetch_assoc();
-// }
 
 ?>
 <!DOCTYPE html>
@@ -410,11 +407,31 @@ $show_idor_alert = false;
         <!-- PAGE: BAC -->
         <main <?= $active_page === 'bac' ? 'class="active"' : '' ?>>
             <div class="breadcrumb">Security › <span>Insecure Direct Object Reference</span></div>
-            <h1 class="page-title">
-                Insecure Direct Object Reference
-                <!-- <span class="severity-badge badge-critical">🚨 CRITICAL</span> -->
-            </h1>
-            <p class="page-subtitle">Sửa đổi thông tin của bất kỳ user nào qua ID trên URL</p>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:4px;">
+                <h1 class="page-title" style="margin:0;">
+                    Insecure Direct Object Reference
+                </h1>
+
+                <form method="POST" action="?page=bac<?= isset($_SESSION['user_id']) ? '&user_id=' . (int)$_SESSION['user_id'] : '' ?>" style="flex-shrink:0;">
+                    <input type="hidden" name="toggle_idor" value="1">
+                    <button type="submit" style="
+                        display:flex;align-items:center;gap:8px;
+                        padding:8px 16px;border-radius:8px;border:none;cursor:pointer;
+                        font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;
+                        background:<?= $idor_protected ? '#f0fdf4' : '#fef2f2' ?>;
+                        color:<?= $idor_protected ? '#15803d' : '#dc2626' ?>;
+                        border:1.5px solid <?= $idor_protected ? 'rgba(34,197,94,.3)' : 'rgba(239,68,68,.3)' ?>;">
+                        <span
+                            style="width:10px;height:10px;border-radius:50%;background:<?= $idor_protected ? '#22c55e' : '#ef4444' ?>;display:inline-block;"></span>
+                        <?= $idor_protected ? '🛡️ Đang bảo vệ' : '⚠️ Đang bị tấn công' ?>
+                    </button>
+                </form>
+            </div>
+            <p class="page-subtitle">
+                <?= $idor_protected
+                    ? '✅ Đang khóa truy cập theo ID URL. Khi nhập user_id khác, hệ thống sẽ trả về tài khoản của chính bạn.'
+                    : '❌ Cho phép xem hồ sơ theo user_id trên URL để mô phỏng IDOR.' ?>
+            </p>
 
             <div class="card">
                 <div class="card-header">🛠️ Quản lý tài khoản cá nhân</div>
@@ -426,7 +443,7 @@ $show_idor_alert = false;
                             <!-- PHẦN 1: Hiển thị thông tin tĩnh -->
                             <div id="info-display">
                                 <p style="font-size:13.5px;margin-bottom:8px;"><strong>Username:</strong>
-                                    <?= htmlspecialchars($idor_user['username']) ?></p>
+                                    <?= htmlspecialchars($idor_user['username'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></p>
                                 <p style="font-size:13.5px;margin-bottom:8px;"><strong>CCCD:</strong>
                                     <?= !empty($idor_user['citizen_id']) ? htmlspecialchars($idor_user['citizen_id']) : 'Chua cap nhat' ?>
                                 </p>
@@ -450,14 +467,14 @@ $show_idor_alert = false;
                             <!-- PHẦN 2: Form cập nhật thông tin (Mặc định ẩn) -->
                             <div id="edit-form" style="display: none;margin-top: 7px;">
                                 <h4 style="font-size: 14px; margin: 15px 0 10px 0;">Cập nhật hồ sơ</h4>
-                                <form method="POST" action="handle/update_profile.php?user_id=<?= $_GET['user_id'] ?>"
+                                <form method="POST" action="handle/update_profile.php?user_id=<?= (int)($requested_view_id ?? $current_session_id) ?>"
                                     style="margin-bottom: 20px;">
                                     <div style="margin-bottom: 12px;">
                                         <label
                                             style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">Username
                                             mới:</label>
                                         <input type="text" name="new_username"
-                                            value="<?= htmlspecialchars($idor_user['username']) ?>"
+                                            value="<?= htmlspecialchars($idor_user['username'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
                                             style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
                                     </div>
 
