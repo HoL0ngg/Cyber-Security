@@ -227,7 +227,7 @@ $show_idor_alert = false;
 
             <a class="nav-item <?= $active_page === 'bac'  ? 'active' : '' ?>"
                 href="?page=bac<?= isset($_SESSION['user_id']) ? "&user_id=" . $_SESSION['user_id'] : '' ?>">🔑
-                &nbsp;Broken Access Control</a>
+                &nbsp;IDOR</a>
 
         </aside>
 
@@ -237,7 +237,7 @@ $show_idor_alert = false;
             <div class="breadcrumb">Security › <span>Cross-Site Scripting</span></div>
             <h1 class="page-title">
                 Cross-Site Scripting
-                <span class="severity-badge badge-high">⚠ HIGH RISK</span>
+                <!-- <span class="severity-badge badge-high">⚠ HIGH RISK</span> -->
             </h1>
             <p class="page-subtitle">Nhập script vào ô bình luận để quan sát lỗ hổng XSS</p>
 
@@ -284,7 +284,7 @@ $show_idor_alert = false;
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
                 <h1 class="page-title">
                     Cross-Site Request Forgery
-                    <span class="severity-badge badge-medium">⚡ MEDIUM RISK</span>
+                    <!-- <span class="severity-badge badge-medium">⚡ MEDIUM RISK</span> -->
                 </h1>
 
                 <!-- Toggle bảo vệ CSRF -->
@@ -356,10 +356,10 @@ $show_idor_alert = false;
 
         <!-- PAGE: BAC -->
         <main <?= $active_page === 'bac' ? 'class="active"' : '' ?>>
-            <div class="breadcrumb">Security › <span>Broken Access Control (IDOR)</span></div>
+            <div class="breadcrumb">Security › <span>Insecure Direct Object Reference</span></div>
             <h1 class="page-title">
-                Broken Access Control
-                <span class="severity-badge badge-critical">🚨 CRITICAL</span>
+                Insecure Direct Object Reference
+                <!-- <span class="severity-badge badge-critical">🚨 CRITICAL</span> -->
             </h1>
             <p class="page-subtitle">Sửa đổi thông tin của bất kỳ user nào qua ID trên URL</p>
 
